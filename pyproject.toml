@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "costa rica proxy means test"
+version = "0.1.0"
+description = "Supervised Learning Example for CAPP 30254 - Machine Learning for Public Policy"
+authors = ["Magdalena Barros, Paula Cadena, and Michael Rosenbaum"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+scikit-learn = "^1.4.2"
+pandas = "^2.2.2"
+matplotlib = "^3.8.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
