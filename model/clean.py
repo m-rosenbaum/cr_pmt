@@ -4,6 +4,11 @@ import pathlib
 
 from typing import List, Union
 
+## ----------------------------------------------------------------------------
+# TODO for Cleaning commands:
+#       - Write collapse vars for durable assets:
+#       - Collpase command
+## ----------------------------------------------------------------------------
 
 def load_data(file_name: str, labels: dict = None) -> pd.DataFrame:
     '''
@@ -23,9 +28,19 @@ def load_data(file_name: str, labels: dict = None) -> pd.DataFrame:
     created_vars = ['SQBescolari', 'SQBage', 'SQBhogar_total', 'hogar_total', 
                     'SQBedjefe', 'SQBhogar_nin', 'SQBovercrowding',
                     'SQBdependency', 'SQBmeaned', 'agesq']
-    file.drop(created_vars, axis = 1, inplace = True)
+    # Remove calculated vars
+    calc_vars = ["edjefe", "edjefa", "r4h1", "r4h2", "r4h3", 
+                 "r4m1", "r4m2", "r4m3", "r4t1", "r4t2", "overcrowding", 
+                 "tamhog", "tamviv", "dependency", 
+                 "meaneduc"]
+    # Remove 2nd pair of dummy vars
+    dum_vars = ["area2", "male"]
+    
+    # Drop all variables in place
+    for vars in [created_vars, calc_vars, dum_vars]:
+        file.drop(vars, axis = 1, inplace = True)
 
-    # Return
+    # Return output
     return file
     
 
@@ -76,7 +91,7 @@ def clean_educ_cats(df: pd.DataFrame) -> pd.DataFrame:
     df['educ'].value_counts(normalize = True)
 
     # Create output dummies
-    df = pd.get_dummies(df, columns = ['educ'])
+    df = pd.get_dummies(df, columns = ['educ'], dtype = 'float')
     df.drop(educ, axis = 1, inplace = True)
     return df
 
@@ -116,7 +131,7 @@ def clean_marital_cats(df: pd.DataFrame) -> pd.DataFrame:
     df['marital'].value_counts(normalize = True)
 
     # Create output dummies
-    df = pd.get_dummies(df, columns = ['marital'])
+    df = pd.get_dummies(df, columns = ['marital'], dtype = 'float')
     df.drop(marital, axis = 1, inplace = True)
     return df
 
@@ -167,12 +182,18 @@ def clean_hhh_rel_cats(df: pd.DataFrame) -> pd.DataFrame:
     df['hhh_rel'].value_counts(normalize = True)
 
     # Create output dummies
-    df = pd.get_dummies(df, columns = ['hhh_rel'])
+    df = pd.get_dummies(df, columns = ['hhh_rel'], dtype = 'float')
     df.drop(hhh_rel, axis = 1, inplace = True)
     return df
 
 def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     '''
+    Handle missing values for variables with missing values:
+
+    Input:
+        df: A Dataframe with missing values
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
     '''
     
     #change all nan in (v18q1, number of tablets household owns) to 0
@@ -182,3 +203,10 @@ def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[df['tipovivi1'] == 1, 'v2a1'] = df.loc[df['tipovivi1'] == 1, 'v2a1'].fillna(0)
 
     return df
+
+def collapse_df(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    Collapse the dataframe to the household-level.
+    '''
+    # TODO: Need to write this.
+    pass
