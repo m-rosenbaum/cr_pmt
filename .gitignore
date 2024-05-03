@@ -127,3 +127,7 @@ cython_debug/
 
 # Local tests
 local_tests.ipynb
+
+# Reports
+report/milestone.html
+report/milestone.pdf
