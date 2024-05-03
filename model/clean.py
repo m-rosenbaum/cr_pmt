@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pathlib
 
@@ -27,3 +28,145 @@ def load_data(file_name: str, labels: dict = None) -> pd.DataFrame:
     # Return
     return file
     
+
+def clean_educ_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans education variables.
+
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    ''' 
+    # Load list of values to clean
+    educ = ['instlevel1', 'instlevel2', 'instlevel3', 'instlevel4', \
+        'instlevel5', 'instlevel6', 'instlevel7', 'instlevel8', 'instlevel9', \
+        'instlevel99']
+    
+    # Create education missing dummy
+    df['instlevel99'] = 0
+    df.loc[df[educ].sum(axis = 1) == 0, 'instlevel99'] = 1
+    # Thenn cut to proportions
+    educ_combined = pd.from_dummies(df[educ]).astype('category')
+    educ_combined = educ_combined.iloc[:, 0].cat.rename_categories(
+            {'instlevel1': '1_no_schooling', 
+            'instlevel2': '2_some_primary', 
+            'instlevel3': '3_complete_primary', 
+            'instlevel4': '4_some_secondary', 
+            'instlevel5': '5_complete_secondary', 
+            'instlevel6': '6_some_technical',
+            'instlevel7': '7_complete_technical', 
+            'instlevel8': '8_complete_tertiary', 
+            'instlevel9': '9_complete_graduate',
+            'instlevel99' : '99_missing'}
+        )
+    df['educ'] = educ_combined
+
+    # Combine variables than convert to dummies
+    df['educ'] = np.where(
+        df['educ'].isin(['6_some_technical', 
+                         '7_complete_technical',
+                         '9_complete_graduate', 
+                         '8_complete_tertiary']
+                        ), 
+            '6_any_postsecondary', df['educ'])
+    df['educ'] = np.where(
+        df['educ'].isin(['99_missing']), 
+            '1_no_schooling', df['educ'])
+    df['educ'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['educ'])
+    df.drop(educ, axis = 1, inplace = True)
+    return df
+
+
+def clean_marital_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans marital status variables.
+
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    ''' 
+    # Load list of values to clean
+    marital = ['estadocivil1', 'estadocivil2', 'estadocivil3', 'estadocivil4', \
+    'estadocivil5', 'estadocivil6', 'estadocivil7']
+    
+    # Then cut to proportions
+    marital_combined = pd.from_dummies(df[marital]).astype('category')
+    marital_combined = marital_combined.iloc[:, 0].cat.rename_categories(
+            {'estadocivil1': '1_child', 
+            'estadocivil2': '2_partnered', 
+            'estadocivil3': '3_married', 
+            'estadocivil4': '4_divorced', 
+            'estadocivil5': '5_separated', 
+            'estadocivil6': '6_widower', 
+            'estadocivil7': '7_single'})
+    df['marital'] = marital_combined
+
+    # Combine variables than convert to dummies
+    df['marital'] = np.where(
+        df['marital'].isin(['4_divorced', 
+                         '5_separated',
+                         '6_widower', 
+                         '7_single']), 
+            '4_separated', df['marital'])
+    df['marital'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['marital'])
+    df.drop(marital, axis = 1, inplace = True)
+    return df
+
+
+def clean_hhh_rel_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans relation to the household head variables.
+
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    ''' 
+    # Load list of values to clean
+    hhh_rel = ['parentesco1', 'parentesco2', 'parentesco3', 'parentesco4', \
+            'parentesco5', 'parentesco6', 'parentesco7', 'parentesco8', \
+            'parentesco9', 'parentesco10', 'parentesco11', 'parentesco12']
+    
+    # Then cut to proportions
+    hhh_rel_combined = pd.from_dummies(df[hhh_rel]).astype('category')
+    hhh_rel_combined = hhh_rel_combined.iloc[:, 0].cat.rename_categories(
+        {'parentesco1': '1_hhh', 
+         'parentesco2': '2_hhh_spouse', 
+         'parentesco3': '3_offspring', 
+         'parentesco4': '4_Stepson/daughter', 
+         'parentesco5': '5_Son/daughter in law', 
+         'parentesco6': '6_Grandson/daughter',
+         'parentesco7': '7_Mother/father', 
+         'parentesco8': '8_Mother/father in law', 
+         'parentesco9': '9_Brother/sister',  
+         'parentesco10': '10_Brother/sister in law',
+         'parentesco11': '11_Other family member', 
+         'parentesco12': '12_Other non-family'})
+    df['hhh_rel'] = hhh_rel_combined
+
+    # Combine variables than convert to dummies
+    df['hhh_rel'] = np.where(
+        df['hhh_rel'].isin(['4_Stepson/daughter', 
+            '5_Son/daughter in law', 
+            '6_Grandson/daughter',
+            '7_Mother/father', 
+            '8_Mother/father in law', 
+            '9_Brother/sister',  
+            '10_Brother/sister in law',
+            '11_Other family member', 
+            '12_Other non-family']), 
+            '4_other', df['hhh_rel'])
+    df['hhh_rel'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['hhh_rel'])
+    df.drop(hhh_rel, axis = 1, inplace = True)
+    return df
