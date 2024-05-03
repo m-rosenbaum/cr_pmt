@@ -198,6 +198,7 @@ def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     
     #change all nan in (v18q1, number of tablets household owns) to 0
     df['v18q1'] = df['v18q1'].fillna(0)
+    df.drop('v18', axis = 1, inplace = True)
 
     # Replace NaN values in 'v2a1'(Monthly rent payment) where 'tipovivi1'(fully paid) equals 1 with a 0.
     df.loc[df['tipovivi1'] == 1, 'v2a1'] = df.loc[df['tipovivi1'] == 1, 'v2a1'].fillna(0)
