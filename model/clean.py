@@ -186,6 +186,7 @@ def clean_hhh_rel_cats(df: pd.DataFrame) -> pd.DataFrame:
     df.drop(hhh_rel, axis = 1, inplace = True)
     return df
 
+
 def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     '''
     Handle missing values for variables with missing values:
@@ -204,6 +205,7 @@ def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[df['tipovivi1'] == 1, 'v2a1'] = df.loc[df['tipovivi1'] == 1, 'v2a1'].fillna(0)
 
     return df
+
 
 def collapse_df(df: pd.DataFrame) -> pd.DataFrame:
     '''
