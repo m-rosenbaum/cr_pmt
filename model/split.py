@@ -6,7 +6,8 @@ from imblearn.over_sampling import SMOTE
 from typing import List, Union
 
 
-def cr_pmt_split(df: pd.DataFrame, label: str = 'Target', seed: int = 42):
+def cr_pmt_split(df: pd.DataFrame, label: str = 'Target', seed: int = 42, 
+                 cv: bool = False):
     '''
     Take in the input data and split it into 3 sets of training, validation,
     tests split on the label and input variables. It uses a 70%, 10%, and 20%
@@ -35,16 +36,27 @@ def cr_pmt_split(df: pd.DataFrame, label: str = 'Target', seed: int = 42):
     X_temp_resampled, y_temp_resampled = smote.fit_resample(X_temp, y_temp)
     X_test_resampled, y_test_resampled = smote.fit_resample(X_test, y_test)
 
-    # Split the temporary set into training (70%) and validation (10%) sets
-    X_train_resampled, X_val_resampled, y_train_resampled, y_val_resampled = \
-        train_test_split(X_temp_resampled, y_temp_resampled, \
-                         test_size= 1/8, random_state = seed)
+    if cv == False:
+        # Split the temporary set into training (70%) and validation (10%) sets
+        X_train_resampled, X_val_resampled, y_train_resampled, y_val_resampled = \
+            train_test_split(X_temp_resampled, y_temp_resampled, \
+                            test_size= 1/8, random_state = seed)
 
-    print("Training set size after SMOTE:", len(X_train_resampled))
-    print("Validation set size:", len(X_val_resampled))
-    print("Test set size:", len(X_test_resampled))
+        print("Training set size after SMOTE:", len(X_train_resampled))
+        print("Validation set size:", len(X_val_resampled))
+        print("Test set size:", len(X_test_resampled))
 
-    # Return
-    return X_train_resampled, y_train_resampled, \
-        X_val_resampled, y_val_resampled, \
-        X_test_resampled, y_test_resampled
+        # Return
+        return X_train_resampled, y_train_resampled, \
+            X_val_resampled, y_val_resampled, \
+            X_test_resampled, y_test_resampled
+    
+    if cv == True:
+        # RFeport training size
+        print("Training set size after SMOTE (prior to cross-validation):", 
+              len(X_temp_resampled))
+        print("Test set size:", len(X_test_resampled))
+
+        # Return
+        return X_temp_resampled, y_temp_resampled, \
+            X_test_resampled, y_test_resampled
