@@ -10,8 +10,7 @@ from typing import List, Union
 
 #------------------------------------------------
 # TODO:
-#   - Visualization
-#   - Add NN grid search
+#   - Visualizing model decision
 #   - Accuracy evaluation 
 #   - Save final model
 # ------------------------------------------------
