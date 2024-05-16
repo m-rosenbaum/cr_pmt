@@ -122,7 +122,6 @@ def clean_educ_cats(df: pd.DataFrame) -> pd.DataFrame:
         df["educ"],
     )
     df["educ"] = np.where(df["educ"].isin(["99_missing"]), "1_no_schooling", df["educ"])
-    df["educ"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["educ"], dtype="float")
@@ -171,7 +170,6 @@ def clean_marital_cats(df: pd.DataFrame) -> pd.DataFrame:
         "4_separated",
         df["marital"],
     )
-    df["marital"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["marital"], dtype="float")
@@ -242,7 +240,6 @@ def clean_hhh_rel_cats(df: pd.DataFrame) -> pd.DataFrame:
         "4_other",
         df["hhh_rel"],
     )
-    df["hhh_rel"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["hhh_rel"], dtype="float")
@@ -295,7 +292,6 @@ def clean_pared_material_cats(df: pd.DataFrame) -> pd.DataFrame:
         "other",
         df["pared_material"],
     )
-    df["pared_material"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["pared_material"], dtype="float")
@@ -344,7 +340,6 @@ def clean_piso_material_cats(df: pd.DataFrame) -> pd.DataFrame:
         "other",
         df["piso_material"],
     )
-    df["piso_material"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["piso_material"], dtype="float")
@@ -391,7 +386,6 @@ def clean_sanitario_cats(df: pd.DataFrame) -> pd.DataFrame:
         "6 other",
         df["sanitario"],
     )
-    df["sanitario"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["sanitario"], dtype="float")
@@ -430,7 +424,6 @@ def clean_tipovivi_cats(df: pd.DataFrame) -> pd.DataFrame:
     df["tipovivi"] = np.where(
         df["tipovivi"].isin(["precarious"]), "other", df["tipovivi"]
     )
-    df["tipovivi"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["tipovivi"], dtype="float")
@@ -475,8 +468,6 @@ def clean_sanitario_cats(df: pd.DataFrame) -> pd.DataFrame:
 
     df["rubbish_disposal"] = rubbish_disposal_combined
 
-    rubbish_disposal_combined.value_counts(normalize=True)
-
     # Combine variables than convert to dummies
     df["rubbish_disposal"] = np.where(
         df["rubbish_disposal"].isin(
@@ -485,7 +476,6 @@ def clean_sanitario_cats(df: pd.DataFrame) -> pd.DataFrame:
         "6 other",
         df["rubbish_disposal"],
     )
-    df["rubbish_disposal"].value_counts(normalize=True)
 
     # Create output dummies
     df = pd.get_dummies(df, columns=["rubbish_disposal"], dtype="float")
@@ -507,9 +497,12 @@ def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     df["v18q1"] = df["v18q1"].fillna(0)
     df.drop("v18q", axis=1, inplace=True)
 
-    # Replace NaN values in 'v2a1'(Monthly rent payment) where 'tipovivi1'(fully paid) equals 1 with a 0.
-    df.loc[df["tipovivi1"] == 1, "v2a1"] = df.loc[
-        df["tipovivi1"] == 1, "v2a1"].fillna(0)
+    # Replace NaN with 0 in 'v2a1'(Monthly rent) where 'tipovivi1'(fully paid) = 1.
+    df.loc[df['tipovivi1'] == 1, 'v2a1'] = df.loc[df["tipovivi1"] == 1, "v2a1"].fillna(0)
+    
+    # Replace NaN values with 0 for other and precarious too
+    df.loc[df['tipovivi4'] == 1, 'v2a1'] = df.loc[df["tipovivi4"] == 1, "v2a1"].fillna(0)
+    df.loc[df['tipovivi5'] == 1, 'v2a1'] = df.loc[df["tipovivi5"] == 1, "v2a1"].fillna(0)
 
     return df
 
@@ -536,6 +529,22 @@ def collapse_df(df: pd.DataFrame) -> pd.DataFrame:
 
     # Drop extraneous HHH rel questions:
     df = df.loc[:, ~df.columns.str.startswith('hhh_rel_')]
+    
+    # ID drops for split
     df.drop('Id', axis = 1, inplace = True)
+    df.drop('idhogar', axis = 1, inplace = True)
 
+    return df
+
+def drop_indiv_vars(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    Remove remaining individual-level variables.
+
+    Input:
+        - df (pd.DataFrame): Household-level dataset
+
+    Returns (df): Household-level dataframe with dropped variables.
+    '''
+    vars_indiv = ['rez_esc']
+    df.drop(vars_indiv, axis = 1, inplace = True)
     return df
