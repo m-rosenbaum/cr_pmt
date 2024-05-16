@@ -8,6 +8,13 @@ from sklearn.model_selection import GridSearchCV
 
 from typing import List, Union
 
+#------------------------------------------------
+# TODO:
+#   - Visualization
+#   - Add NN grid search
+#   - Accuracy evaluation 
+#   - Save final model
+# ------------------------------------------------
 
 ## Tune variable
 def tune_sklearn_models(
@@ -15,13 +22,21 @@ def tune_sklearn_models(
     ) -> Union[List, List, int]:
     '''
     Function to handle training and returning various models as part of the 
-    pipeline.
+    pipeline. Currently handles:
+        - Penalized multinomial regression
+        - KNN
+        - Random forests
 
     Input:
         X_train - ndarray of training data
         y_train - ndarray of training data
-        X_val - ndarray of validation data
-        y_val - ndarray of validation data
+        model - Classifier object name in sklearn
+    
+    Output:
+        (List, List, int):
+            - parameters tested for a specific model
+            - test accuracy for the CV
+            - Which position in the lists perform best
     '''
     # Establish model parameters
     if model == 'RandomForestClassifier':
