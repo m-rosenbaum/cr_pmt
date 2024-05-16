@@ -76,11 +76,11 @@ def tune_sklearn_models(
     # Return tuple of results
     return (params, test_score, best)
 
-def tune_nn_model(
-        X_train: np.ndarray, y_train: np.ndarray
-    ) -> Union[List, List, int]:
-    pass
-    # TODO: Figure out neural net format.
+#def tune_nn_model(
+#        X_train: np.ndarray, y_train: np.ndarray
+#    ) -> Union[List, List, int]:
+#    pass
+#    # TODO: Tensor flow + grid search, if time
 
 # Determine final model
 def visualize_acc():
