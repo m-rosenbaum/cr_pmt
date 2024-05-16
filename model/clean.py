@@ -35,9 +35,14 @@ def load_data(file_name: str, labels: dict = None) -> pd.DataFrame:
                  "meaneduc"]
     # Remove 2nd pair of dummy vars
     dum_vars = ["area2", "male"]
+
+    # Remove because no variation (97% = 'techozinc')
+    techo_material = ['techozinc','techoentrepiso', 'techocane', 'techootro']
+
+
     
     # Drop all variables in place
-    for vars in [created_vars, calc_vars, dum_vars]:
+    for vars in [created_vars, calc_vars, dum_vars,techo_material]:
         file.drop(vars, axis = 1, inplace = True)
 
     # Return output
@@ -186,6 +191,211 @@ def clean_hhh_rel_cats(df: pd.DataFrame) -> pd.DataFrame:
     df.drop(hhh_rel, axis = 1, inplace = True)
     return df
 
+def clean_pared_material_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans the predominant material on the outside wall variables.
+
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    '''
+    
+
+    # Load list of values to clean
+    pared_material = ['paredblolad','paredzocalo','paredpreb','pareddes','paredmad',
+    'paredzinc',
+    'paredfibras',
+    'paredother']
+
+    # Then cut to proportions
+    pared_material_combined = pd.from_dummies(df[pared_material]).astype('category')
+    pared_material_combined = pared_material_combined.iloc[:, 0].cat.rename_categories(
+        {'paredblolad':'block or brick',
+    'paredzocalo': 'socket',
+    'paredpreb': 'prefabricated or cement',
+    'pareddes': 'waste material',
+    'paredmad': 'wood',
+    'paredzinc': 'zink',
+    'paredfibras': 'natural fibers',
+    'paredother': 'other'})
+
+    df['pared_material'] = pared_material_combined
+
+    # Combine variables than convert to dummies
+    df['pared_material'] = np.where(
+        df['pared_material'].isin(['zink', 
+            'waste material', 'natural fibers']), 
+            'other', df['pared_material'])
+    df['pared_material'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['pared_material'], dtype = 'float')
+    df.drop(pared_material, axis = 1, inplace = True)
+
+    return df
+
+
+def clean_piso_material_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans predominant material on the floor.
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    '''
+
+    
+    # Load list of values to clean
+    piso_material = ['pisomoscer',
+    'pisocemento',
+    'pisoother',
+    'pisonatur',
+    'pisonotiene',
+    'pisomadera']
+
+    # Then cut to proportions
+    piso_material_combined = pd.from_dummies(df[piso_material]).astype('category')
+    piso_material_combined = piso_material_combined.iloc[:, 0].cat.rename_categories(
+        {'pisomoscer': 'mosaic,  ceramic,  terrazo',
+    'pisocemento': 'cement',
+    'pisoother': 'other',
+    'pisonatur': 'natural material',
+    'pisonotiene': 'no floor',
+    'pisomadera': 'wood'})
+
+    df['piso_material'] = piso_material_combined
+
+    #Combine variables than convert to dummies
+    df['piso_material'] = np.where(
+        df['piso_material'].isin(['natural material','no floor']), 
+            'other', df['piso_material'])
+    df['piso_material'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['piso_material'], dtype = 'float')
+    df.drop(piso_material, axis = 1, inplace = True)
+
+    return df
+
+def clean_sanitario_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans toilet connected to.
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    '''
+
+    # Load list of values to clean
+    sanitario = ['sanitario1', 
+    'sanitario2',
+    'sanitario3', 
+    'sanitario5',
+    'sanitario6', ]
+
+    # Then cut to proportions
+    sanitario_combined = pd.from_dummies(df[sanitario]).astype('category')
+    sanitario_combined = sanitario_combined.iloc[:, 0].cat.rename_categories(
+        {'sanitario1': '1 no toilet', 
+    'sanitario2': '2 sewer or cesspool',
+    'sanitario3': '3 septic tank', 
+    'sanitario5': '5 black hole or letrine',
+    'sanitario6': '6 other'})
+
+    df['sanitario'] = sanitario_combined
+
+    # Combine variables than convert to dummies
+    df['sanitario'] = np.where(
+        df['sanitario'].isin(['5 black hole or letrinel','1 no toilet']), 
+            '6 other', df['sanitario'])
+    df['sanitario'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['sanitario'], dtype = 'float')
+    df.drop(sanitario, axis = 1, inplace = True)
+
+    return df
+
+def clean_tipovivi_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans if the housing is fully paid for.
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    '''
+
+    
+    # Load list of values to clean
+    tipovivi = ['tipovivi1','tipovivi2', 'tipovivi3', 'tipovivi4', 'tipovivi5']
+
+    # Then cut to proportions
+    tipoviv_combined = pd.from_dummies(df[tipovivi]).astype('category')
+    tipoviv_combined = tipoviv_combined.iloc[:, 0].cat.rename_categories(
+            {'tipovivi1':'fully paid',
+            'tipovivi2': 'own' ,
+            'tipovivi3': 'rented',
+            'tipovivi4': 'precarious' ,
+            'tipovivi5': 'other'  })
+
+    df['tipovivi'] = tipoviv_combined
+
+    # Combine variables than convert to dummies
+    df['tipovivi'] = np.where(
+        df['tipovivi'].isin(['precarious']), 
+            'other', df['tipovivi'])
+    df['tipovivi'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['tipovivi'], dtype = 'float')
+    df.drop(tipovivi, axis = 1, inplace = True)
+
+    return df
+
+def clean_sanitario_cats(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    This command cleans if rubbish disposal mainly by.
+    Input:
+        df: A Dataframe with pandas values to complete.
+    
+    Returns: (DataFrame) A pandas dataframe for consistent labels.
+    '''
+
+    # Load list of values to clean
+    rubbish_disposal = ['elimbasu1', 
+    'elimbasu2', 
+    'elimbasu3', 
+    'elimbasu4', 
+    'elimbasu5', 
+    'elimbasu6']
+
+    # Then cut to proportions
+    rubbish_disposal_combined = pd.from_dummies(df[rubbish_disposal]).astype('category')
+    rubbish_disposal_combined = rubbish_disposal_combined.iloc[:, 0].cat.rename_categories(
+        {'elimbasu1': '1 tanker truck', 
+    'elimbasu2': '2 botan hollow or buried', 
+    'elimbasu3': '3 burning', 
+    'elimbasu4': '4 throwing in an unoccupied space', 
+    'elimbasu5':' 5 throwing in river,  creek or sea' , 
+    'elimbasu6': '6 other'})
+
+    df['rubbish_disposal'] = rubbish_disposal_combined
+
+    rubbish_disposal_combined.value_counts(normalize = True)
+
+    # Combine variables than convert to dummies
+    df['rubbish_disposal'] = np.where(
+        df['rubbish_disposal'].isin(['2 botan hollow or buried','4 throwing in an unoccupied space']), 
+            '6 other', df['rubbish_disposal'])
+    df['rubbish_disposal'].value_counts(normalize = True)
+
+    # Create output dummies
+    df = pd.get_dummies(df, columns = ['rubbish_disposal'], dtype = 'float')
+    df.drop(rubbish_disposal, axis = 1, inplace = True)
+
+    return df
+
 
 def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     '''
@@ -211,5 +421,43 @@ def collapse_df(df: pd.DataFrame) -> pd.DataFrame:
     '''
     Collapse the dataframe to the household-level.
     '''
-    # TODO: Need to write this.
-    pass
+    
+    # Filter the DataFrame where 'parentesco1' equals 1 (household head)
+    parentesco1_eq_1 = df[df['parentesco1'] == 1]
+
+    # Filter the DataFrame where 'parentesco2' equals 1 (spouse/partner)
+    parentesco2_eq_1 = df[df['parentesco2'] == 1]
+
+    # Filter the DataFrame where 'parentesco3' equals 1 (son/doughter)
+    parentesco3_eq_1 = df[df['parentesco3'] == 1]
+
+    # Concatenate the filtered DataFrames to create a subset of unique 'idhogar' values
+    df = pd.concat([parentesco1_eq_1, parentesco2_eq_1, parentesco3_eq_1]).drop_duplicates(subset='idhogar')
+    
+    return df 
+
+ 
+
+
+
+
+
+
+    
+
+
+
+
+
+    
+
+
+    
+
+
+
+
+
+    
+
+
