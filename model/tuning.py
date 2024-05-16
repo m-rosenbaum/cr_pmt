@@ -64,7 +64,7 @@ def tune_sklearn_models(
         }
         object = KNeighborsClassifier()
 
-    # Tune model and extrat relevant output
+    # Tune model and extract relevant output, optimizing on F1 score
     search = GridSearchCV(object, params, scoring = 'f1', cv = 5)
     search.fit(X_train, y_train)
 
