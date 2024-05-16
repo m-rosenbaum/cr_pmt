@@ -505,7 +505,7 @@ def handle_missing(df: pd.DataFrame) -> pd.DataFrame:
     """
     # change all nan in (v18q1, number of tablets household owns) to 0
     df["v18q1"] = df["v18q1"].fillna(0)
-    df.drop("v18", axis=1, inplace=True)
+    df.drop("v18q", axis=1, inplace=True)
 
     # Replace NaN values in 'v2a1'(Monthly rent payment) where 'tipovivi1'(fully paid) equals 1 with a 0.
     df.loc[df["tipovivi1"] == 1, "v2a1"] = df.loc[
@@ -525,9 +525,9 @@ def collapse_df(df: pd.DataFrame) -> pd.DataFrame:
     Returns: (pd.Dataframe) Household-level dataframe identified by 'idhogar'
     """
     # Only select HHH rows that are valid heads
-    parentesco1_eq_1 = df[df["parentesco1"] == 1]  # 'parentesco1' = 1 (household head)
-    parentesco2_eq_1 = df[df["parentesco2"] == 1]  # 'parentesco2' = 1 (spouse/partner)
-    parentesco3_eq_1 = df[df["parentesco3"] == 1]  # 'parentesco3' = 1 (son/doughter)
+    parentesco1_eq_1 = df[df["hhh_rel_1_hhh"] == 1]  # 'parentesco1' = 1 (household head)
+    parentesco2_eq_1 = df[df["hhh_rel_2_hhh_spouse"] == 1]  # 'parentesco2' = 1 (spouse/partner)
+    parentesco3_eq_1 = df[df["hhh_rel_3_offspring"] == 1]  # 'parentesco3' = 1 (son/doughter)
 
     # Concatenate the filtered DataFrames to create a subset of unique 'idhogar' values
     df = pd.concat(
@@ -535,6 +535,7 @@ def collapse_df(df: pd.DataFrame) -> pd.DataFrame:
     ).drop_duplicates(subset="idhogar")
 
     # Drop extraneous HHH rel questions:
-    df.loc[:,~df.columns.str.startswith('parentesco')]
+    df = df.loc[:, ~df.columns.str.startswith('hhh_rel_')]
+    df.drop('Id', axis = 1, inplace = True)
 
     return df
