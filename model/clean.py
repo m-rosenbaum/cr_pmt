@@ -2,13 +2,7 @@ import numpy as np
 import pandas as pd
 import pathlib
 
-from typing import List, Union
-
-## ----------------------------------------------------------------------------
-# TODO for Cleaning commands:
-#       - Write collapse vars for durable assets:
-#       - Collpase command
-## ----------------------------------------------------------------------------
+from typing import List
 
 
 def load_data(file_name: str, labels: dict = None) -> pd.DataFrame:
