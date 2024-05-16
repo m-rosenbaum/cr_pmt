@@ -41,36 +41,35 @@ def tune_sklearn_models(
     if model == 'RandomForestClassifier':
         # 2 * 2 * 4 * 3 * 3 = 154 models
         params = {
-            'n_estimators': [100, 250], # Num trees
-            'criterion': ['gini', 'entropy'], # Loss options, not including 'log_loss' 
-            'max_depth': [None, X_train.shape[1]/2, X_train.shape[1]/4, 10], # Depth of tree
+            'n_estimators': [25, 50, 100], #, 250], # Num trees
+            'criterion': ['gini'], #, 'entropy'], # Loss options, not including 'log_loss' 
+            'max_depth': [None, int(round(X_train.shape[1]/2)), int(round(X_train.shape[1]/4)), 5], # Depth of tree
             'min_samples_leaf': [1, 5, 10], # Num obs in leaf required
             'max_samples': [0.25, 0.50, 0.75] # Percent of sample to include
         }
         object = RandomForestClassifier()
     if model == "LogisticRegression":
-        # 3 * 5 + 1 * 5 = 20 models
+        # 8 * 2 = 16 models
         params = {
-            'penalty': ['l1', 'l2', 'elasticnet'], 
-            'C' : [1.0, 0.1, 0.01, 0.001, 0.0001, 0.0001], # Lambda weight, inverse so smaller = larger penalty
-            'l1_ratio': [0.10, 0.25, 0.50, 0.75, 0.90]
+            'penalty': ['l1', 'l2'], # No elastic net due to solver issues 
+            'C' : [100, 10, 1.0, 0.1, 0.01, 0.001, 0.0001, 0.0001], # Lambda weight, inverse so smaller = larger penalty
         }
-        object = LogisticRegression()
+        object = LogisticRegression(max_iter = 100, solver = 'liblinear')
     if model == "KNeighborsClassifier":
         # 5 = 5 models
         params = {
-            'leaf_size': [5, 10, 20, 30, 50]
+            'n_neighbors': [3, 5, 10, 25, 50, 100]
         }
         object = KNeighborsClassifier()
 
     # Tune model and extract relevant output, optimizing on F1 score
-    search = GridSearchCV(object, params, scoring = 'f1', cv = 5)
+    search = GridSearchCV(object, params, scoring = 'f1_macro', cv = 5) # f1_Macro is unweighted average (fine b/c SMOTE)
     search.fit(X_train, y_train)
 
     # Extract results
     params = search.cv_results_['params']
     test_score = search.cv_results_['mean_test_score']
-    best = search.cv_results_['best'].index(1) # Extract the index of the best model
+    best = list(search.cv_results_['rank_test_score']).index(1) # Extract the index of the best model
 
     # Return tuple of results
     return (params, test_score, best)
