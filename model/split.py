@@ -35,7 +35,6 @@ def cr_pmt_split(df: pd.DataFrame, label: str = 'Target', seed: int = 42,
     # Per Katherine, do this after train test to avoid data leakage
     smote = SMOTE()
     X_temp_resampled, y_temp_resampled = smote.fit_resample(X_temp, y_temp)
-    X_test_resampled, y_test_resampled = smote.fit_resample(X_test, y_test)
 
     if cv == False:
         # Split the temporary set into training (70%) and validation (10%) sets
@@ -46,13 +45,12 @@ def cr_pmt_split(df: pd.DataFrame, label: str = 'Target', seed: int = 42,
         print("Training set prior to SMOTE:", len(X_temp))
         print("Training set size after SMOTE:", len(X_train_resampled))
         print("Validation set size after SMOTE:", len(X_val_resampled))
-        print("Test set size prior to SMOTE", len(X_test))
-        print("Test set size after SMOTE:", len(X_test_resampled))
+        print("Test set size:", len(X_test))
 
         # Return
         return X_train_resampled, y_train_resampled, \
             X_val_resampled, y_val_resampled, \
-            X_test_resampled, y_test_resampled
+            X_test, y_test
     
     if cv == True:
         # RFeport training size
@@ -60,9 +58,8 @@ def cr_pmt_split(df: pd.DataFrame, label: str = 'Target', seed: int = 42,
               len(X_temp))
         print("Training set size after SMOTE (prior to CV):", 
               len(X_temp_resampled))
-        print("Test set size prior to SMOTE", len(X_test))
-        print("Test set size after SMOTE:", len(X_test_resampled))
+        print("Test set size:", len(X_test))
 
         # Return
         return X_temp_resampled, y_temp_resampled, \
-            X_test_resampled, y_test_resampled
+            X_test, y_test

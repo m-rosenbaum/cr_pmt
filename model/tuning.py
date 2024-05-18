@@ -39,12 +39,12 @@ def tune_sklearn_models(
     '''
     # Establish model parameters
     if model == 'RandomForestClassifier':
-        # 2 * 2 * 4 * 3 * 3 = 154 models
+        # 3 * 1 * 4 * 4 * 3 = 144 models
         params = {
             'n_estimators': [25, 50, 100], #, 250], # Num trees
             'criterion': ['gini'], #, 'entropy'], # Loss options, not including 'log_loss' 
             'max_depth': [None, int(round(X_train.shape[1]/2)), int(round(X_train.shape[1]/4)), 5], # Depth of tree
-            'min_samples_leaf': [1, 5, 10], # Num obs in leaf required
+            'min_samples_leaf': [1, 5, 10, 50], # Num obs in leaf required
             'max_samples': [0.25, 0.50, 0.75] # Percent of sample to include
         }
         object = RandomForestClassifier()
@@ -56,9 +56,10 @@ def tune_sklearn_models(
         }
         object = LogisticRegression(max_iter = 100, solver = 'liblinear')
     if model == "KNeighborsClassifier":
-        # 5 = 5 models
+        # 6 * 2 = 12 models
         params = {
-            'n_neighbors': [3, 5, 10, 25, 50, 100]
+            'n_neighbors': [3, 5, 10, 25, 50, 100],
+            'weights': ['uniform', 'distance']
         }
         object = KNeighborsClassifier()
 
