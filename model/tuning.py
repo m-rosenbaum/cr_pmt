@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import label_binarize
-from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, auc, roc_curve
+from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, auc, roc_curve, ConfusionMatrixDisplay
 from joblib import dump
 
 from typing import List, Union, Tuple
@@ -15,9 +15,9 @@ from typing import List, Union, Tuple
 import matplotlib
 import os
 
-if os.environ.get("DISPLAY", "") == "":
-    print("No display found. Using non-interactive Agg backend")
-    matplotlib.use("Agg")
+#if os.environ.get("DISPLAY", "") == "":
+#    print("No display found. Using non-interactive Agg backend")
+#    matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
@@ -89,25 +89,26 @@ def tune_sklearn_models(
 
     # Tune model and extract relevant output, optimizing on F1 score
     search = GridSearchCV(
-        object, params, scoring="f1_macro", cv=5, return_train_score=False
+        object, 
+        params, 
+        scoring = "f1_macro", 
+        cv = 5, 
+        refit = True
     )  # f1_Macro is unweighted average (fine b/c SMOTE)
     search.fit(X_train, y_train)
 
     # Extract results
     params = search.cv_results_["params"]
     test_score = search.cv_results_["mean_test_score"]
-    best = list(search.cv_results_["rank_test_score"]).index(
-        1
-    )  # Extract the index of the best model
-    best_model = search.best_estimator_
+    best = list(search.cv_results_["rank_test_score"]).index(1)
 
     # Return tuple of results
-    return (params, test_score, best, best_model)
+    return (params, test_score, best, search)
 
 # -------------------------------------
 # Model evaluation
 # -------------------------------------
-def visualize_acc(model, X_test: pd.DataFrame, y_test: pd.DataFrame):
+def visualize_acc(model, model_name: str, X_test: pd.DataFrame, y_test: pd.DataFrame):
     """
     Function to visualize the accuracy and decision boundaries of the model.
 
@@ -129,39 +130,19 @@ def visualize_acc(model, X_test: pd.DataFrame, y_test: pd.DataFrame):
     print(f"Accuracy: {accuracy}")
     print(f"F1 Score (macro): {f1}")
 
-    # Confusion Matrix
-    cm = confusion_matrix(y_test, y_pred)
-
-    # Plot heatmap
-    plt.figure(figsize=(10, 7))
-    plt.imshow(cm, cmap="Blues", interpolation="nearest")
-
-    # Add annotations
-    for i in range(len(cm)):
-        for j in range(len(cm[i])):
-            plt.text(
-                j,
-                i,
-                str(cm[i, j]),
-                horizontalalignment="center",
-                verticalalignment="center",
-            )
-
-    plt.colorbar(label="Counts")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.title("Confusion Matrix")
+    # Confusion matrix:
+    labels = ['Extreme\nPoverty', 
+              'Moderate\nPoverty', 
+              'Vulnerable\nHouseholds', 
+              'Non-vulnerable\nHouseholds']
+    cm = confusion_matrix(y_test, y_pred, normalize='true')
+    
+    # Display confusion matrix in-line with sci-kit learn formatting
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, 
+                                  display_labels=labels)
+    disp.plot()
+    plt.title(f'Confusion Matrix - {model_name}') 
     plt.show()
-
-
-def save_final_model(model, filename: str):
-    """
-    Function to save the final model to disk.
-
-    Input:
-    """
-    dump(model, filename)
-    print(f"Model saved to {filename}")
 
 
 # Prediction thresholding
@@ -195,13 +176,17 @@ def plot_roc_auc(model, X_test, y_test):
     # Plot ROC curve for each class
     plt.figure(figsize=(10, 7))
     colors = ["blue", "red", "green", "purple"]
+    labels = ['Extreme Poverty', 
+              'Moderate Poverty', 
+              'Vulnerable Households', 
+              'Non-vulnerable Households']
     for i, color in zip(range(n_classes), colors):
         plt.plot(
             fpr[i],
             tpr[i],
             color=color,
             lw=2,
-            label=f"ROC curve (class {i}) (area = {roc_auc[i]:.2f})",
+            label=f"ROC curve ({labels[i]}) (area = {roc_auc[i]:.2f})",
         )
 
     plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
@@ -212,3 +197,39 @@ def plot_roc_auc(model, X_test, y_test):
     plt.title("Receiver Operating Characteristic")
     plt.legend(loc="lower right")
     plt.show()
+
+
+# -------------------------------------
+#  Helper functions
+# -------------------------------------
+def create_estimate_table(output: Union[list, np.ndarray, int], 
+                          type: str, 
+                          filename: str) -> None:
+    '''
+    Helper funciton to save the training values from the cross-validation
+    into a CSV file to estimate the output.
+
+    Input:
+        output (Tuple): Tuple from our training function
+        type (str): Type of model being added to a CSV
+        filename (str): Filename
+
+    Returns: None (saves results to disk)
+    '''
+    # Load list of dicts and array into the same format
+    df = pd.DataFrame(output[0])
+    df['f1_macro'] = output[1]
+    df['type'] = type
+    # Save output
+    df.to_csv(filename)
+
+
+def save_final_model(model, filename: str):
+    """
+    Function to save the final model to disk.
+
+    Input:
+
+    """
+    dump(model, filename)
+    print(f"Model saved to {filename}")
