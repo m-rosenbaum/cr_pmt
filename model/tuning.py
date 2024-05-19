@@ -111,7 +111,7 @@ def tune_sklearn_models(
 # -------------------------------------
 # Model evaluation
 # -------------------------------------
-def visualize_acc(model, model_name: str, X_test: pd.DataFrame, y_test: pd.DataFrame):
+def visualize_acc(model, model_name: str, X_test: pd.DataFrame, y_test: pd.DataFrame, normalize='true'):
     """
     Function to visualize the accuracy and decision boundaries of the model.
 
@@ -138,7 +138,7 @@ def visualize_acc(model, model_name: str, X_test: pd.DataFrame, y_test: pd.DataF
               'Moderate\nPoverty', 
               'Vulnerable\nHouseholds', 
               'Non-vulnerable\nHouseholds']
-    cm = confusion_matrix(y_test, y_pred, normalize='true')
+    cm = confusion_matrix(y_test, y_pred, normalize=normalize)
     
     # Display confusion matrix in-line with sci-kit learn formatting
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, 
