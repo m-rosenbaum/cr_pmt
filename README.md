@@ -13,4 +13,5 @@ Our complete approach and details are available in a [project report](https://gi
 
 ## Acknowledgments
 Professor: Chenhao Tan
+
 Teaching Assistants: Karen Zhou, Katherine Dumais
