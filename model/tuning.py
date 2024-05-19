@@ -80,17 +80,17 @@ def tune_sklearn_models(
     best_model = search.best_estimator_
 
     # Perform prediction on each fold and store true and predicted labels
-    cv_predictions = []
+    predictions = []
     for train_idx, valid_idx in search.cv.split(X_train, y_train):
         X_fold_train, X_fold_valid = X_train[train_idx], X_train[valid_idx]
         y_fold_train, y_fold_valid = y_train[train_idx], y_train[valid_idx]
         model_fold = search.best_estimator_.set_params(**params[best])
         model_fold.fit(X_fold_train, y_fold_train)
         y_pred_fold = model_fold.predict(X_fold_valid)
-        cv_predictions.append((y_fold_valid, y_pred_fold))
+        predictions.append((y_fold_valid, y_pred_fold))
 
     # Return tuple of results
-    return (params, test_score, best, best_model, cv_predictions)
+    return (params, test_score, best, best_model, predictions)
 
 #def tune_nn_model(
 #        X_train: np.ndarray, y_train: np.ndarray
