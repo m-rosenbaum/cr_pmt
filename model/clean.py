@@ -548,3 +548,11 @@ def drop_indiv_vars(df: pd.DataFrame) -> pd.DataFrame:
     vars_indiv = ['rez_esc']
     df.drop(vars_indiv, axis = 1, inplace = True)
     return df
+
+
+def scale_and_normalize(df: pd.DataFrame, vars: list) -> pd.DataFrame:
+    '''
+    '''
+    for var in vars:
+        df[var] = df[var] / df[var].std() - df[var].mean()
+    return df

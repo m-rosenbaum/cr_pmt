@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pathlib
 import seaborn as sns
+from imblearn.pipeline import Pipeline, make_pipeline
+from imblearn.over_sampling import SMOTE
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -22,7 +24,7 @@ import os
 import matplotlib.pyplot as plt
 
 # -------------------------------------
-# MOdel Tuning
+# Model Tuning
 # -------------------------------------
 def tune_sklearn_models(
     X_train: np.ndarray, y_train: np.ndarray, model: str
@@ -40,19 +42,17 @@ def tune_sklearn_models(
         model - Classifier object name in sklearn
 
     Output:
-        (List, List, int):
+        (List, List, int, model):
             - parameters tested for a specific model
             - test accuracy for the CV
             - Which position in the lists perform best
+            - Classifier object
     """
     # Establish model parameters
     if model == "RandomForestClassifier":
-        # 3 * 1 * 4 * 4 * 3 = 144 models
+        # 3 * 4 * 4 * 3 = 144 models
         params = {
-            "n_estimators": [25, 50, 100],  # , 250], # Num trees
-            "criterion": [
-                "gini"
-            ],  # , 'entropy'], # Loss options, not including 'log_loss'
+            "n_estimators": [25, 50, 100], # Num trees
             "max_depth": [
                 None,
                 int(round(X_train.shape[1] / 2)),
@@ -62,7 +62,8 @@ def tune_sklearn_models(
             "min_samples_leaf": [1, 5, 10, 50],  # Num obs in leaf required
             "max_samples": [0.25, 0.50, 0.75],  # Percent of sample to include
         }
-        object = RandomForestClassifier()
+        new_params = {'randomforestclassifier__' + key: params[key] for key in params}
+        object = make_pipeline(SMOTE(), RandomForestClassifier(criterion = 'gini'))
     if model == "LogisticRegression":
         # 8 * 2 = 16 models
         params = {
@@ -78,19 +79,21 @@ def tune_sklearn_models(
                 0.0001,
             ],  # Lambda weight, inverse so smaller = larger penalty
         }
-        object = LogisticRegression(max_iter=100, solver="liblinear")
+        new_params = {'logisticregression__' + key: params[key] for key in params}
+        object = make_pipeline(SMOTE(), LogisticRegression(max_iter=100, solver="liblinear"))
     if model == "KNeighborsClassifier":
         # 6 * 2 = 12 models
         params = {
             "n_neighbors": [3, 5, 10, 25, 50, 100],
             "weights": ["uniform", "distance"],
         }
-        object = KNeighborsClassifier()
-
+        new_params = {'kneighborsclassifier__' + key: params[key] for key in params}
+        object = make_pipeline(SMOTE(), KNeighborsClassifier())
+                               
     # Tune model and extract relevant output, optimizing on F1 score
     search = GridSearchCV(
         object, 
-        params, 
+        new_params, 
         scoring = "f1_macro", 
         cv = 5, 
         refit = True
@@ -146,7 +149,7 @@ def visualize_acc(model, model_name: str, X_test: pd.DataFrame, y_test: pd.DataF
 
 
 # Prediction thresholding
-def plot_roc_auc(model, X_test, y_test):
+def plot_roc_auc(model, model_name: str, X_test: pd.DataFrame, y_test: pd.DataFrame):
     """
     Function to plot ROC curve and calculate AUC score for multiclass 
     classification.
@@ -194,7 +197,7 @@ def plot_roc_auc(model, X_test, y_test):
     plt.ylim([0.0, 1.05])
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
-    plt.title("Receiver Operating Characteristic")
+    plt.title(f"Receiver Operating Characteristic - {model_name}")
     plt.legend(loc="lower right")
     plt.show()
 
