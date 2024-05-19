@@ -1,16 +1,25 @@
 import numpy as np
 import pandas as pd
 import pathlib
-import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, roc_auc_score, roc_curve
+from sklearn.preprocessing import label_binarize
+from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, auc, roc_curve
 from joblib import dump
 
 from typing import List, Union, Tuple
+
+import matplotlib
+import os
+
+if os.environ.get('DISPLAY', '') == '':
+    print('No display found. Using non-interactive Agg backend')
+    matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
 
 #------------------------------------------------
 # TODO:
@@ -68,29 +77,17 @@ def tune_sklearn_models(
         object = KNeighborsClassifier()
 
     # Tune model and extract relevant output, optimizing on F1 score
-    search = GridSearchCV(object, params, scoring = 'f1_macro', cv = 5) # f1_Macro is unweighted average (fine b/c SMOTE)
+    search = GridSearchCV(object, params, scoring = 'f1_macro', cv = 5, return_train_score = False) # f1_Macro is unweighted average (fine b/c SMOTE)
     search.fit(X_train, y_train)
 
     # Extract results
     params = search.cv_results_['params']
     test_score = search.cv_results_['mean_test_score']
     best = list(search.cv_results_['rank_test_score']).index(1) # Extract the index of the best model
-
-    # Get the best model
     best_model = search.best_estimator_
 
-    # Perform prediction on each fold and store true and predicted labels
-    predictions = []
-    for train_idx, valid_idx in search.cv.split(X_train, y_train):
-        X_fold_train, X_fold_valid = X_train[train_idx], X_train[valid_idx]
-        y_fold_train, y_fold_valid = y_train[train_idx], y_train[valid_idx]
-        model_fold = search.best_estimator_.set_params(**params[best])
-        model_fold.fit(X_fold_train, y_fold_train)
-        y_pred_fold = model_fold.predict(X_fold_valid)
-        predictions.append((y_fold_valid, y_pred_fold))
-
     # Return tuple of results
-    return (params, test_score, best, best_model, predictions)
+    return (params, test_score, best, best_model)
 
 #def tune_nn_model(
 #        X_train: np.ndarray, y_train: np.ndarray
@@ -115,12 +112,22 @@ def visualize_acc(model, X_test, y_test):
 
     # Confusion Matrix
     cm = confusion_matrix(y_test, y_pred)
+    
+    # Plot heatmap
     plt.figure(figsize=(10, 7))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.imshow(cm, cmap='Blues', interpolation='nearest')
+
+    # Add annotations
+    for i in range(len(cm)):
+        for j in range(len(cm[i])):
+            plt.text(j, i, str(cm[i, j]), horizontalalignment='center', verticalalignment='center')
+
+    plt.colorbar(label='Counts')
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
     plt.title('Confusion Matrix')
     plt.show()
+
 
 def save_final_model(model, filename: str):
     '''
@@ -132,14 +139,28 @@ def save_final_model(model, filename: str):
 # Prediction thresholding
 def plot_roc_auc(model, X_test, y_test):
     '''
-    Function to plot ROC curve and calculate AUC score.
+    Function to plot ROC curve and calculate AUC score for multiclass classification.
     '''
-    y_prob = model.predict_proba(X_test)[:, 1]
-    fpr, tpr, thresholds = roc_curve(y_test, y_prob)
-    roc_auc = roc_auc_score(y_test, y_prob)
+    # Binarize the labels
+    y_test_bin = label_binarize(y_test, classes=np.unique(y_test))
 
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    n_classes = y_test_bin.shape[1]
+
+    for i in range(n_classes):
+        y_score = model.predict_proba(X_test)[:, i]
+        fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_score)
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # Plot ROC curve for each class
     plt.figure(figsize=(10, 7))
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+    colors = ['blue', 'red', 'green', 'purple'] 
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=2, label=f'ROC curve (class {i}) (area = {roc_auc[i]:.2f})')
+
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
