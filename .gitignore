@@ -133,3 +133,4 @@ report/milestone.html
 report/milestone.pdf
 report/report.html
 report/report.pdf
+report/*.csv
